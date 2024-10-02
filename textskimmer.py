@@ -9,5 +9,6 @@ for line in file:
     print(split)
     if hardstop:
         i+=1
-    if i == hardstop: 
+    if i == hardstop:
         break
+
