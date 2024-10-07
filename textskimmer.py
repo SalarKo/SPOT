@@ -1,14 +1,14 @@
+# Make Skimmer work. RegEx
+import re
 file = open("output.txt", "r", encoding='utf8')
-hardstop = 22
-i = 0
+content = file.read()
 
-for line in file:
-    split = line.split(' ')
-    print('\n')
-    print(split)
-    if hardstop:
-        i += 1
-    if i == hardstop:
-        break
+def check_telephone_number(text):  
+    pattern = r'[\+\(]?[0-9() -]{8,15}'  # Adjusted length for phone numbers
+    return re.findall(pattern, text)
+
+def check_duplicates(list):
 
 
+numbers = check_telephone_number(content)
+print(numbers)
