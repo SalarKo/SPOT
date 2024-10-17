@@ -5,7 +5,7 @@ smart ad scrapping program in collaboration with Netvaerk for 5th semester IT pr
 ## Created by:
 - **Salar Komeyshi** - [GitHub](https://github.com/SalarKo)
 - **Kacper Hvid** - [GitHub](https://github.com/KacperPuzniak)
-- **Victor Rasmussen** - [GitHub](https://github.com/Officialredd)
+- **Victor Emil Søe Rasmussen** - [GitHub](https://github.com/Officialredd)
 - **Jonas W.** - [GitHub](https://github.com/X1las)
 - **Daniel Barakzei** - [GitHub](https://github.com/DANIEl-svg745)
 
