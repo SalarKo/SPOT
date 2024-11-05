@@ -94,7 +94,7 @@
                 </form>
                 <div id="uploadMessage" class="mt-3"></div>
                 <div id="downloadLink" class="mt-3" style="display: none;">
-                    <a id="csvDownloadButton" class="btn btn-success" href="#" download>Download CSV</a>
+                    <a id="excelDownloadButton" class="btn btn-success" href="#" download>Download Excel File</a> <!-- Changed to Excel -->
                 </div>
             </div>
 
@@ -126,7 +126,7 @@
         const fileSubmitBtn = document.getElementById('fileSubmitBtn');
         const uploadMessage = document.getElementById('uploadMessage');
         const downloadLink = document.getElementById('downloadLink');
-        const csvDownloadButton = document.getElementById('csvDownloadButton');
+        const excelDownloadButton = document.getElementById('excelDownloadButton');
 
         dragDropArea.addEventListener('dragover', (e) => {
             e.preventDefault();
@@ -171,13 +171,13 @@
                     // Check if the process message exists and display it
                     if (response.process) {
                         uploadMessage.innerHTML += '<br>' + response.process.message;
-                        // Show the download link for the CSV file
-                        csvDownloadButton.href = '/uploads/' + response.process.csv_file;
+                        // Show the download link for the Excel file
+                        excelDownloadButton.href = '/uploads/' + response.process.excel_file; // Update to excel_file
                         downloadLink.style.display = 'block'; // Show the download link
                     }
                 },
                 error: function (xhr) {
-                    uploadMessage.innerHTML = xhr.responseJSON.error;
+                    uploadMessage.innerHTML = xhr.responseJSON.error || "An unknown error occurred. Please try again.";
                 }
             });
         });
