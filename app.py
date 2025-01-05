@@ -1,9 +1,9 @@
-import fitz  # PyMuPDF
-import pytesseract
-from PIL import Image
 import io
 import re
 import os
+import pytesseract
+import fitz
+from PIL import Image
 from flask import Flask, request, render_template, send_from_directory
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
