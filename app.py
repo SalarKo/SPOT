@@ -192,10 +192,10 @@ def upload_file():
         remove_pdfs("output")
         # Return a JSON response with the download link information
         return {
-            "output": {"message": "Processing complete! Check your Excel file."},
+            "upload": {"message": "Processing complete! Check your Excel file."},
             "process": {
                 "message": "Company information saved successfully.",
-                "excel_file": os.path.basename(company_info_excel_path)  # Filename for downloading
+                "excel_file": os.path.abspath(company_info_excel_path)  # Filename for downloading
             }
         }, 200
     else:
