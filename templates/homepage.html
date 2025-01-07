@@ -113,7 +113,7 @@
     </div>
 
     <div class="footer">
-        <p>&copy; 2024 SPOT | Powered by Flask & Python</p>
+        <p>&copy; 2025 SPOT | Powered by Monster Energy™</p>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
@@ -170,10 +170,7 @@
 
                     // Check if the process message exists and display it
                     if (response.process) {
-                        uploadMessage.innerHTML += '<br>' + response.process.message;
-                        // Show the download link for the Excel file
-                        excelDownloadButton.href = '/uploads/' + response.process.excel_file; // Update to excel_file
-                        downloadLink.style.display = 'block'; // Show the download link
+                        uploadMessage.innerHTML = "Saved to location: <br>" + response.process.excel_file;
                     }
                 },
                 error: function (xhr) {

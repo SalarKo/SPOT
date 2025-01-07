@@ -1,6 +1,7 @@
 import io
 import re
 import os
+import time
 import pytesseract
 import fitz
 from PIL import Image
@@ -13,6 +14,31 @@ from webdriver_manager.chrome import ChromeDriverManager
 import pandas as pd
 
 app = Flask(__name__)
+
+def remove_pdfs(directory):
+    """
+    Removes all PDF files from the specified directory.
+    
+    Parameters:
+        directory (str): The path to the directory to clean.
+    """
+    if not os.path.isdir(directory):
+        print(f"The specified directory does not exist: {directory}")
+        return
+    
+    pdf_files = [file for file in os.listdir(directory) if file.endswith('.pdf')]
+    
+    if not pdf_files:
+        print("No PDF files found in the directory.")
+        return
+    
+    for file in pdf_files:
+        file_path = os.path.join(directory, file)
+        try:
+            os.remove(file_path)
+            print(f"Removed: {file_path}")
+        except Exception as e:
+            print(f"Failed to remove {file_path}: {e}")
 
 # Function to extract text from PDF using OCR
 def extract_text_from_pdf_images(pdf_path, zoom=2):
@@ -34,8 +60,13 @@ def extract_text_from_pdf_images(pdf_path, zoom=2):
 
 # Function to find Danish phone numbers
 def find_danish_phone_numbers(text):
-    phone_regex = r"\b(?:\d{2}[\s.-]?\d{2}[\s.-]?\d{2}[\s.-]?\d{2})\b"
-    phone_numbers = re.findall(phone_regex, text)
+    regex = r"\b(?:\d{2}[\s.-]?\d{2}[\s.-]?\d{2}[\s.-]?\d{2})\b"
+    regex_2 = r"(?:\b(?:Tel\.|Tlf\.)?\s*)?"
+    regex_3 = r"\b\d(?:\s?\d){7}\b"
+    numbers = re.findall(regex, text)
+    numbers_2 = re.findall(regex_2, text)
+    numbers_3 = re.findall(regex_3, text)
+    phone_numbers = [x for n in (numbers,numbers_2,numbers_3) for x in n]
     return phone_numbers
 
 # Function to clean phone numbers
@@ -43,10 +74,13 @@ def clean_phone_numbers(phone_numbers):
     cleaned_numbers = [num.replace(" ", "") for num in phone_numbers if "." not in num and "-" not in num]
     valid_numbers = [num for num in cleaned_numbers if len(num) == 8 and num.isdigit()]
     unique_numbers = list(set(valid_numbers))
+    print(valid_numbers)
+    print(unique_numbers)
+    print("unique phone numbers: " + str(len(unique_numbers)))
     return unique_numbers
 
 # Function to fetch company info
-def fetch_company_info(phone_numbers, pdf_path):
+def fetch_company_info(phone_numbers, output_path):
     options = Options()
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=options)
@@ -61,6 +95,7 @@ def fetch_company_info(phone_numbers, pdf_path):
         relative_divs = driver.find_elements(By.CSS_SELECTOR, 'div.relative')
 
         for div in relative_divs:
+            time.sleep(3)
             phone_link = div.find_elements(By.CSS_SELECTOR, 'a[data-guv-click="company_phone_show"]')
 
             if phone_link:
@@ -103,7 +138,7 @@ def fetch_company_info(phone_numbers, pdf_path):
     # Save to Excel
     if company_info:
         df = pd.DataFrame(company_info, columns=['Phone Number', 'Company Name', 'Postal Info'])
-        excel_filename = os.path.join('uploads', f"{os.path.splitext(os.path.basename(pdf_path))[0]}_company_info.xlsx")
+        excel_filename = os.path.join('output', f"{os.path.splitext(os.path.basename(output_path))[0]}_company_info.xlsx")
 
         # Check if file already exists and handle it
         if os.path.exists(excel_filename):
@@ -132,37 +167,44 @@ def upload_file():
         return {"error": "No file selected!"}, 400
 
     pdf_path = os.path.join('uploads', file.filename)
+    output_path = os.path.join('output', file.filename)
+
     file.save(pdf_path)
 
     ocr_text = extract_text_from_pdf_images(pdf_path)
     raw_phone_numbers = find_danish_phone_numbers(ocr_text)
     cleaned_phone_numbers = clean_phone_numbers(raw_phone_numbers)
 
+
     if cleaned_phone_numbers:
-        fetch_company_info(cleaned_phone_numbers, pdf_path)
+        file.save(output_path)
+        fetch_company_info(cleaned_phone_numbers, output_path)
 
         # Construct the path to the Excel file
-        company_info_excel_path = os.path.join('uploads',
-                                               f"{os.path.splitext(os.path.basename(pdf_path))[0]}_company_info.xlsx")
-
+        company_info_excel_path = os.path.join('output',
+                                               f"{os.path.splitext(os.path.basename(output_path))[0]}_company_info.xlsx")
+        company_info_pdf_path = os.path.join('output',
+                                               f"{os.path.splitext(os.path.basename(output_path))[0]}_company_info.pdf")
+        
         # Construct the download URL
-        download_url = f"/uploads/{os.path.basename(company_info_excel_path)}"
+        download_url = f"/output/{os.path.basename(company_info_excel_path)}"
         print(f"Excel file path: {company_info_excel_path}")
+        remove_pdfs("output")
         # Return a JSON response with the download link information
         return {
             "upload": {"message": "Processing complete! Check your Excel file."},
             "process": {
                 "message": "Company information saved successfully.",
-                "excel_file": os.path.basename(company_info_excel_path)  # Filename for downloading
+                "excel_file": os.path.abspath(company_info_excel_path)  # Filename for downloading
             }
         }, 200
     else:
         return {"error": "No valid Danish phone numbers found."}, 400
 
 # Route to download the Excel file
-@app.route('/uploads/<filename>')
+@app.route('/output/<filename>')
 def download_file(filename):
-    return send_from_directory('uploads', filename)
+    return send_from_directory('output', filename)
 
 if __name__ == '__main__':
     app.run(debug=True)
