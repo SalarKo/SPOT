@@ -166,16 +166,15 @@
                 processData: false,
                 contentType: false,
                 success: function (response) {
-                    uploadMessage.innerHTML = response.upload.message;
+    uploadMessage.innerHTML = response.upload.message;
 
-                    // Check if the process message exists and display it
-                    if (response.process) {
-                        uploadMessage.innerHTML += '<br>' + response.process.message;
-                        // Show the download link for the Excel file
-                        excelDownloadButton.href = '/uploads/' + response.process.excel_file; // Update to excel_file
-                        downloadLink.style.display = 'block'; // Show the download link
-                    }
-                },
+    // Check if the process message exists and display it
+    if (response.process) {
+        uploadMessage.innerHTML += '<br>' + response.process.message;
+        uploadMessage.innerHTML += '<br>Processed files are saved in the "Output" folder on the server.';
+    }
+},
+
                 error: function (xhr) {
                     uploadMessage.innerHTML = xhr.responseJSON.error || "An unknown error occurred. Please try again.";
                 }

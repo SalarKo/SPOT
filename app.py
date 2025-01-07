@@ -55,7 +55,7 @@ def clean_phone_numbers(phone_numbers):
     return unique_numbers
 
 # Function to fetch company info
-def fetch_company_info(phone_numbers, pdf_path):
+def fetch_company_info(phone_numbers, output_path):
     options = Options()
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=options)
@@ -113,7 +113,7 @@ def fetch_company_info(phone_numbers, pdf_path):
     # Save to Excel
     if company_info:
         df = pd.DataFrame(company_info, columns=['Phone Number', 'Company Name', 'Postal Info'])
-        excel_filename = os.path.join('uploads', f"{os.path.splitext(os.path.basename(pdf_path))[0]}_company_info.xlsx")
+        excel_filename = os.path.join('output', f"{os.path.splitext(os.path.basename(output_path))[0]}_company_info.xlsx")
 
         # Check if file already exists and handle it
         if os.path.exists(excel_filename):
@@ -142,25 +142,27 @@ def upload_file():
         return {"error": "No file selected!"}, 400
 
     pdf_path = os.path.join('uploads', file.filename)
-    file.save(pdf_path)
+    output_path = os.path.join('output', file.filename)
+
+    file.save(output_path)
 
     ocr_text = extract_text_from_pdf_images(pdf_path)
     raw_phone_numbers = find_danish_phone_numbers(ocr_text)
     cleaned_phone_numbers = clean_phone_numbers(raw_phone_numbers)
 
     if cleaned_phone_numbers:
-        fetch_company_info(cleaned_phone_numbers, pdf_path)
+        fetch_company_info(cleaned_phone_numbers, output_path)
 
         # Construct the path to the Excel file
-        company_info_excel_path = os.path.join('uploads',
-                                               f"{os.path.splitext(os.path.basename(pdf_path))[0]}_company_info.xlsx")
+        company_info_excel_path = os.path.join('output',
+                                               f"{os.path.splitext(os.path.basename(output_path))[0]}_company_info.xlsx")
 
         # Construct the download URL
-        download_url = f"/uploads/{os.path.basename(company_info_excel_path)}"
+        download_url = f"/output/{os.path.basename(company_info_excel_path)}"
         print(f"Excel file path: {company_info_excel_path}")
         # Return a JSON response with the download link information
         return {
-            "upload": {"message": "Processing complete! Check your Excel file."},
+            "output": {"message": "Processing complete! Check your Excel file."},
             "process": {
                 "message": "Company information saved successfully.",
                 "excel_file": os.path.basename(company_info_excel_path)  # Filename for downloading
@@ -170,9 +172,9 @@ def upload_file():
         return {"error": "No valid Danish phone numbers found."}, 400
 
 # Route to download the Excel file
-@app.route('/uploads/<filename>')
+@app.route('/output/<filename>')
 def download_file(filename):
-    return send_from_directory('uploads', filename)
+    return send_from_directory('output', filename)
 
 if __name__ == '__main__':
     app.run(debug=True)
