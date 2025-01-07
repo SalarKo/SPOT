@@ -1,6 +1,7 @@
 import io
 import re
 import os
+import time
 import pytesseract
 import fitz
 from PIL import Image
@@ -34,8 +35,13 @@ def extract_text_from_pdf_images(pdf_path, zoom=2):
 
 # Function to find Danish phone numbers
 def find_danish_phone_numbers(text):
-    phone_regex = r"\b(?:\d{2}[\s.-]?\d{2}[\s.-]?\d{2}[\s.-]?\d{2})\b"
-    phone_numbers = re.findall(phone_regex, text)
+    regex = r"\b(?:\d{2}[\s.-]?\d{2}[\s.-]?\d{2}[\s.-]?\d{2})\b"
+    regex_2 = r"(?:\b(?:Tel\.|Tlf\.)?\s*)?"
+    regex_3 = r"\b\d(?:\s?\d){7}\b"
+    numbers = re.findall(regex, text)
+    numbers_2 = re.findall(regex_2, text)
+    numbers_3 = re.findall(regex_3, text)
+    phone_numbers = [x for n in (numbers,numbers_2,numbers_3) for x in n]
     return phone_numbers
 
 # Function to clean phone numbers
@@ -43,6 +49,9 @@ def clean_phone_numbers(phone_numbers):
     cleaned_numbers = [num.replace(" ", "") for num in phone_numbers if "." not in num and "-" not in num]
     valid_numbers = [num for num in cleaned_numbers if len(num) == 8 and num.isdigit()]
     unique_numbers = list(set(valid_numbers))
+    print(valid_numbers)
+    print(unique_numbers)
+    print("unique phone numbers: " + str(len(unique_numbers)))
     return unique_numbers
 
 # Function to fetch company info
@@ -61,6 +70,7 @@ def fetch_company_info(phone_numbers, pdf_path):
         relative_divs = driver.find_elements(By.CSS_SELECTOR, 'div.relative')
 
         for div in relative_divs:
+            time.sleep(3)
             phone_link = div.find_elements(By.CSS_SELECTOR, 'a[data-guv-click="company_phone_show"]')
 
             if phone_link:
