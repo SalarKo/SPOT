@@ -15,6 +15,31 @@ import pandas as pd
 
 app = Flask(__name__)
 
+def remove_pdfs(directory):
+    """
+    Removes all PDF files from the specified directory.
+    
+    Parameters:
+        directory (str): The path to the directory to clean.
+    """
+    if not os.path.isdir(directory):
+        print(f"The specified directory does not exist: {directory}")
+        return
+    
+    pdf_files = [file for file in os.listdir(directory) if file.endswith('.pdf')]
+    
+    if not pdf_files:
+        print("No PDF files found in the directory.")
+        return
+    
+    for file in pdf_files:
+        file_path = os.path.join(directory, file)
+        try:
+            os.remove(file_path)
+            print(f"Removed: {file_path}")
+        except Exception as e:
+            print(f"Failed to remove {file_path}: {e}")
+
 # Function to extract text from PDF using OCR
 def extract_text_from_pdf_images(pdf_path, zoom=2):
     doc = fitz.open(pdf_path)
@@ -144,22 +169,27 @@ def upload_file():
     pdf_path = os.path.join('uploads', file.filename)
     output_path = os.path.join('output', file.filename)
 
-    file.save(output_path)
+    file.save(pdf_path)
 
     ocr_text = extract_text_from_pdf_images(pdf_path)
     raw_phone_numbers = find_danish_phone_numbers(ocr_text)
     cleaned_phone_numbers = clean_phone_numbers(raw_phone_numbers)
 
+
     if cleaned_phone_numbers:
+        file.save(output_path)
         fetch_company_info(cleaned_phone_numbers, output_path)
 
         # Construct the path to the Excel file
         company_info_excel_path = os.path.join('output',
                                                f"{os.path.splitext(os.path.basename(output_path))[0]}_company_info.xlsx")
-
+        company_info_pdf_path = os.path.join('output',
+                                               f"{os.path.splitext(os.path.basename(output_path))[0]}_company_info.pdf")
+        
         # Construct the download URL
         download_url = f"/output/{os.path.basename(company_info_excel_path)}"
         print(f"Excel file path: {company_info_excel_path}")
+        remove_pdfs("output")
         # Return a JSON response with the download link information
         return {
             "output": {"message": "Processing complete! Check your Excel file."},
